@@ -195,9 +195,17 @@ jobs:
         run: |
           echo "max_required_byond_client=$(grep -Ev '^[[:blank:]]{0,}#{1,}|^[[:blank:]]{0,}$' .github/max_required_byond_client.txt | tail -n1)" >> $GITHUB_OUTPUT
 
+  compile_for_regular_testing:
+    name: Compile Maps for Integration Tests
+    needs: collect_data
+
+    uses: ./.github/workflows/compile_for_testing.yml
+    with:
+      max_required_byond_client: ${{needs.collect_data.outputs.max_required_byond_client}}
+
   run_all_tests:
     name: Integration Tests
-    needs: collect_data
+    needs: [ collect_data, compile_for_regular_testing ]
 
     strategy:
       fail-fast: false
@@ -208,6 +216,7 @@ jobs:
     with:
       map: ${{ matrix.map }}
       max_required_byond_client: ${{needs.collect_data.outputs.max_required_byond_client}}
+      precompiled_cache_key: ${{ needs.compile_for_regular_testing.outputs.ci_deploy_cache_key }}
 
   run_alternate_tests:
     if: needs.collect_data.outputs.alternate_tests != '[]'
@@ -218,7 +227,7 @@ jobs:
       matrix:
         setup: ${{ fromJSON(needs.collect_data.outputs.alternate_tests) }}
 
-    uses: ./.github/workflows/run_integration_tests.yml
+    uses: ./.github/workflows/run_alternate_tests.yml
     with:
       map: ${{ matrix.setup.map }}
       major: ${{ matrix.setup.major }}
@@ -287,6 +296,23 @@ jobs:
         with:
           dmb-location: tgstation.dmb
           max-required-client-version: ${{needs.collect_data.outputs.max_required_byond_client}}
+
+  perform_cleanup_on_testing_success:
+    name: Cleanup CI Deploy caches upon success
+    runs-on: ubuntu-latest
+    needs: [ run_all_tests, run_alternate_tests ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete all ci deploy caches associated with this workflow run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh cache list --json key --key ci_deploy-${{ github.run_id }} >> ./ci_deploy_cache_list
+          jq -r '.[] | .key' ./ci_deploy_cache_list > ./ci_deploy_cache_keys
+          while read LINE; do
+            echo Deleting cache $LINE
+            gh cache delete $LINE
+          done < ./ci_deploy_cache_keys
 
   completion_gate: # Serves as a non-moving target for branch rulesets
     if: always() && !cancelled()

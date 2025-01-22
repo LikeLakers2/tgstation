@@ -1,0 +1,72 @@
+name: Compile for Integration Testing
+on:
+  workflow_call:
+    inputs:
+      major:
+        required: false
+        type: string
+      minor:
+        required: false
+        type: string
+      max_required_byond_client:
+        required: true
+        type: string
+    outputs:
+      ci_deploy_cache_key:
+        description: "The "
+        value: ${{ jobs.compile_for_integration_testing.outputs.ci_deploy_cache_key }}
+
+jobs:
+  compile_for_integration_testing:
+    runs-on: ubuntu-latest
+    outputs:
+      ci_deploy_cache_key: ${{ steps.export_cache_key.outputs.cache_key }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore BYOND cache
+        uses: actions/cache@v4
+        with:
+          path: ~/BYOND
+          key: ${{ runner.os }}-byond-${{ hashFiles('dependencies.sh') }}
+      - name: Configure version
+        if: ${{ inputs.major }}
+        run: |
+          echo "BYOND_MAJOR=${{ inputs.major }}" >> $GITHUB_ENV
+          echo "BYOND_MINOR=${{ inputs.minor }}" >> $GITHUB_ENV
+      - name: Compile Tests
+        id: compile_tests
+        run: |
+          bash tools/ci/install_byond.sh
+          source $HOME/BYOND/byond/bin/byondsetup
+          tools/build/build --ci dm -DCIBUILDING -DANSICOLORS -Werror -ITG0001 -I"loop_checks"
+      - name: Create the CI Deploy
+        run: |
+          bash tools/deploy.sh ci_test
+          mkdir ci_test/config
+          mkdir ci_test/data
+          cp tools/ci/ci_config.txt ci_test/config/config.txt
+      - name: Check client Compatibility
+        if: always() && steps.compile_tests.outcome == 'success'
+        uses: tgstation/byond-client-compatibility-check@v3
+        with:
+          dmb-location: tgstation.dmb
+          max-required-client-version: ${{inputs.max_required_byond_client}}
+      - name: Export data for creating cache key
+        run: |
+          # Export enough data to ensure that every run of this reusable workflow uses a unique key,
+          # unless all the inputs are the exact same (in which case we're compiling the same data
+          # anyways).
+          echo "SHA: ${{ github.sha }}" >> ./ci_deploy_data
+          echo "Run Attempt Num: ${{ github.run_attempt }}" >> ./ci_deploy_data
+          echo "Inputs: ${{ toJson(inputs) }}" >> ./ci_deploy_data
+      - name: Echo cache key to output
+        # For some reason, this needs to be in its own step - otherwise, the hashFiles function
+        # won't work.
+        id: export_cache_key
+        run: |
+          echo "cache_key=ci_deploy-${{ github.run_id }}-${{ hashFiles('./ci_deploy_data') }}" >> $GITHUB_OUTPUT
+      - name: Upload CI Deploy to Cache
+        uses: actions/cache/save@v4
+        with:
+          path: ./ci_test/**
+          key: ${{ steps.export_cache_key.outputs.cache_key }}

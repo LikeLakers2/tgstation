@@ -16,6 +16,9 @@ on:
       max_required_byond_client:
         required: true
         type: string
+      precompiled_cache_key:
+        required: true
+        type: string
 
 jobs:
   run_integration_tests:
@@ -54,12 +57,14 @@ jobs:
           echo "BYOND_MAJOR=${{ inputs.major }}" >> $GITHUB_ENV
           echo "BYOND_MINOR=${{ inputs.minor }}" >> $GITHUB_ENV
         if: ${{ inputs.major }}
-      - name: Compile Tests
-        id: compile_tests
+      - name: Install BYOND
         run: |
           bash tools/ci/install_byond.sh
-          source $HOME/BYOND/byond/bin/byondsetup
-          tools/build/build --ci dm -DCIBUILDING -DANSICOLORS -Werror -ITG0001 -I"loop_checks"
+      - name: Download Precompiled CI Deploy
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ inputs.precompiled_cache_key }}
+          path: ./ci_test/**
       - name: Run Tests
         run: |
           source $HOME/BYOND/byond/bin/byondsetup
@@ -71,9 +76,3 @@ jobs:
           name: test_artifacts_${{ inputs.map }}_${{ inputs.major }}_${{ inputs.minor }}
           path: data/screenshots_new/
           retention-days: 1
-      - name: Check client Compatibility
-        if: always() && steps.compile_tests.outcome == 'success'
-        uses: tgstation/byond-client-compatibility-check@v3
-        with:
-          dmb-location: tgstation.dmb
-          max-required-client-version: ${{inputs.max_required_byond_client}}
