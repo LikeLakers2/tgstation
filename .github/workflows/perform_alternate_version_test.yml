@@ -1,0 +1,48 @@
+name: Perform Alternate BYOND Version Test
+on:
+  workflow_call:
+    inputs:
+      map:
+        required: true
+        type: string
+      major:
+        required: true
+        type: string
+      minor:
+        required: true
+        type: string
+      max_required_byond_client:
+        required: true
+        type: string
+
+jobs:
+  compile:
+    name: Compile with alternate BYOND version
+    uses: ./.github/workflows/compile_project.yml
+    with:
+      major: ${{ inputs.major }}
+      minor: ${{ inputs.minor }}
+      max_required_byond_client: ${{ inputs.max_required_byond_client }}
+
+  run:
+    name: Run alternate BYOND version Tests
+    needs: compile
+    uses: ./.github/workflows/run_integration_tests.yml
+    with:
+      map: ${{ inputs.map }}
+      major: ${{ inputs.major }}
+      minor: ${{ inputs.minor }}
+      max_required_byond_client: ${{ inputs.max_required_byond_client }}
+      precompiled_cache_key: ${{ needs.compile.outputs.ci_deploy_cache_key }}
+
+  cleanup:
+    name: Cleanup Testing Cache
+    needs: [ compile, run ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Perform Cleanup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CACHE_TO_DELETE: ${{ needs.compile.outputs.ci_deploy_cache_key }}
+        run: gh cache delete $CACHE_TO_DELETE

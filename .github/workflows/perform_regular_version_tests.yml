@@ -1,0 +1,30 @@
+name: Run Regular Tests
+on:
+  workflow_call:
+    inputs:
+      maps:
+        required: true
+        type: string
+      max_required_byond_client:
+        required: true
+        type: string
+
+jobs:
+  compile:
+    uses: ./.github/workflows/compile_project.yml
+    with:
+      max_required_byond_client: ${{ inputs.max_required_byond_client }}
+
+  run:
+    needs: compile
+    uses: ./.github/workflows/run_integration_tests.yml
+
+    strategy:
+      fail-fast: false
+      matrix:
+        map: ${{ fromJSON(inputs.maps).paths }}
+
+    with:
+      map: ${{ matrix.map }}
+      max_required_byond_client: ${{ inputs.max_required_byond_client }}
+      precompiled_cache_key: ${{ needs.compile.outputs.ci_deploy_cache_key }}

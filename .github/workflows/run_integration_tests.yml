@@ -16,9 +16,13 @@ on:
       max_required_byond_client:
         required: true
         type: string
+      precompiled_cache_key:
+        required: true
+        type: string
 
 jobs:
   run_integration_tests:
+    name: Run Integration Tests (${{ inputs.map }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -49,11 +53,11 @@ jobs:
         with:
           major: ${{ inputs.major }}
           minor: ${{ inputs.minor }}
-      - name: Compile Tests
-        id: compile_tests
-        run: |
-          source $HOME/BYOND/byond/bin/byondsetup
-          tools/build/build --ci dm -DCIBUILDING -DANSICOLORS -Werror -ITG0001 -I"loop_checks"
+      - name: Download precompiled CI Deploy from cacheCompile Tests
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ inputs.precompiled_cache_key }}
+          path: ./ci_test/**
       - name: Run Tests
         run: |
           source $HOME/BYOND/byond/bin/byondsetup

@@ -193,30 +193,25 @@ jobs:
       - name: Set up BYOND cache
         uses: ./.github/actions/restore_or_install_byond
 
-  run_all_tests:
+  run_regular_version_tests:
     name: Integration Tests
     needs: collect_data
 
-    strategy:
-      fail-fast: false
-      matrix:
-        map: ${{ fromJSON(needs.collect_data.outputs.maps).paths }}
-
-    uses: ./.github/workflows/run_integration_tests.yml
+    uses: ./.github/workflows/perform_regular_version_tests.yml
     with:
-      map: ${{ matrix.map }}
+      maps: ${{ needs.collect_data.outputs.maps }}
       max_required_byond_client: ${{needs.collect_data.outputs.max_required_byond_client}}
 
-  run_alternate_tests:
+  run_alternate_version_tests:
     if: needs.collect_data.outputs.alternate_tests != '[]'
-    name: Alternate Tests
+    name: Alternate BYOND Version Tests
     needs: collect_data
     strategy:
       fail-fast: false
       matrix:
         setup: ${{ fromJSON(needs.collect_data.outputs.alternate_tests) }}
 
-    uses: ./.github/workflows/run_integration_tests.yml
+    uses: ./.github/workflows/perform_alternate_version_test.yml
     with:
       map: ${{ matrix.setup.map }}
       major: ${{ matrix.setup.major }}
@@ -224,8 +219,8 @@ jobs:
       max_required_byond_client: ${{ matrix.setup.max_client_version || needs.collect_data.outputs.max_required_byond_client }}
 
   compare_screenshots:
-    if: needs.collect_data.outputs.alternate_tests == '[]' || needs.run_alternate_tests.result == 'success'
-    needs: [ collect_data, run_all_tests, run_alternate_tests ]
+    if: needs.collect_data.outputs.alternate_tests == '[]' || needs.run_alternate_version_tests.result == 'success'
+    needs: [ collect_data, run_regular_version_tests, run_alternate_version_tests ]
     name: Compare Screenshot Tests
     timeout-minutes: 15
     runs-on: ubuntu-22.04
@@ -289,7 +284,7 @@ jobs:
   completion_gate: # Serves as a non-moving target for branch rulesets
     if: always() && !cancelled()
     name: Completion Gate
-    needs: [ test_windows, compare_screenshots, compile_all_maps, run_all_tests, run_alternate_tests, run_linters ]
+    needs: [ test_windows, compare_screenshots, compile_all_maps, run_regular_version_tests, run_alternate_version_tests, run_linters ]
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
