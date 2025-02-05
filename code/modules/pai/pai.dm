@@ -38,7 +38,7 @@
 	/// The card we inhabit
 	var/obj/item/pai_card/card
 	/// The current chasis that will appear when in holoform
-	var/chassis = "repairbot"
+	var/datum/pai_chassis_skin/chassis_skin
 	/// Toggles whether the pAI can hold encryption keys or not
 	var/encrypt_mod = FALSE
 	/// The cable we produce when hacking a door
@@ -102,27 +102,6 @@
 		"Internal GPS" = 35,
 		"Universal Translator" = 35,
 	)
-	/// List of all possible chasises. TRUE means the pAI can be picked up in this chasis.
-	var/static/list/possible_chassis = list(
-		"bat" = FALSE,
-		"butterfly" = FALSE,
-		"cat" = TRUE,
-		"chicken" = FALSE,
-		"corgi" = FALSE,
-		"crow" = TRUE,
-		"duffel" = TRUE,
-		"fox" = FALSE,
-		"frog" = TRUE,
-		"hawk" = FALSE,
-		"lizard" = FALSE,
-		"monkey" = TRUE,
-		"mouse" = TRUE,
-		"rabbit" = TRUE,
-		"repairbot" = TRUE,
-		"kitten" = TRUE,
-		"puppy" = TRUE,
-		"spider" = TRUE,
-	)
 
 /mob/living/silicon/pai/add_sensors() //pAIs have to buy their HUDs
 	return
@@ -141,6 +120,7 @@
 	return ..(target, action_bitflags)
 
 /mob/living/silicon/pai/Destroy()
+	QDEL_NULL(chassis_skin)
 	QDEL_NULL(messenger_ability)
 	QDEL_NULL(atmos_analyzer)
 	QDEL_NULL(hacking_cable)
@@ -218,6 +198,7 @@
 	forceMove(pai_card)
 	leash = AddComponent(/datum/component/leash, pai_card, HOLOFORM_DEFAULT_RANGE, force_teleport_out_effect = /obj/effect/temp_visual/guardian/phase/out)
 	addtimer(VARSET_WEAK_CALLBACK(src, holochassis_ready, TRUE), HOLOCHASSIS_INIT_TIME)
+	chassis_skin = new /datum/pai_chassis_skin/repairbot(src)
 	if(!holoform)
 		add_traits(list(TRAIT_IMMOBILIZED, TRAIT_HANDS_BLOCKED), PAI_FOLDED)
 	update_appearance(UPDATE_DESC)
@@ -257,12 +238,11 @@
 	SEND_SIGNAL(src, COMSIG_LIVING_HEALTH_UPDATE)
 
 /mob/living/silicon/pai/update_desc(updates)
-	desc = "A hard-light holographic avatar representing a pAI. This one appears in the form of a [chassis]."
+	desc = "A hard-light holographic avatar representing a pAI. This one appears in the form of a [chassis_skin.name_in_desc]."
 	return ..()
 
 /mob/living/silicon/pai/update_icon_state()
-	icon_state = resting ? "[chassis]_rest" : "[chassis]"
-	held_state = "[chassis]"
+	chassis_skin.update_icon_state()
 	return ..()
 
 /mob/living/silicon/pai/set_stat(new_stat)
