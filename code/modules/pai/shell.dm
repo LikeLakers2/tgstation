@@ -19,7 +19,7 @@
 		return FALSE
 	var/holochassis = pick(possible_chassis)
 	set_holochassis(holochassis)
-	balloon_alert(src, "[holochassis] composite engaged")
+	balloon_alert(src, "[LOWER_TEXT(chassis_skin.name)] composite engaged")
 	return TRUE
 
 /**
@@ -60,9 +60,10 @@
 		return FALSE
 	if(istype(choice, chassis_skin))
 		// Perform no work, as we're already using this skin.
+		// Importantly, this prevents the skin from being qdel'd then immediately recreated.
 		return TRUE
 	set_holochassis(choice)
-	balloon_alert(src, "[lowertext(choice.name)] composite engaged")
+	balloon_alert(src, "[LOWER_TEXT(chassis_skin.name)] composite engaged")
 	update_resting()
 	return TRUE
 
