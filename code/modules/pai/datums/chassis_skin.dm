@@ -9,7 +9,7 @@
 	var/name
 	// The name to show when examining the pAI mob. If this is unspecified, it will be
 	// `LOWER_TEXT(name)`.
-	var/name_in_desc
+	var/name_in_examine
 
 	// The icons and icon states that are applied to the pAI's mob when this chassis is selected.
 	var/icon/icon = 'icons/mob/silicon/pai.dmi'
@@ -34,8 +34,8 @@
 
 /datum/pai_chassis_skin/New(mob/living/silicon/pai/owner)
 	. = ..()
-	if(isnull(name_in_desc))
-		name_in_desc = LOWER_TEXT(name)
+	if(isnull(name_in_examine))
+		name_in_examine = LOWER_TEXT(name)
 	if(isnull(resting_icon_state))
 		resting_icon_state = "[icon_state]_rest"
 	if(isnull(held_or_worn_icon_state))
