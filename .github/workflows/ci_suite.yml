@@ -258,17 +258,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Restore Yarn cache
-        uses: actions/cache@v4
+      - name: Get required Node version
+        shell: bash
+        run: |
+          source dependencies.sh
+          echo "NODE_VERSION_REQUIRED=$NODE_VERSION_LTS" >> $GITHUB_ENV
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: tgui/.yarn/cache
-          key: ${{ runner.os }}-yarn-${{ hashFiles('tgui/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          node-version: ${{ env.NODE_VERSION_REQUIRED }}
+          cache: 'yarn'
+          cache-dependency-path: 'tgui/yarn.lock'
+      - name: Restore or Install BYOND
+        uses: ./.github/actions/restore_or_install_byond
       - name: Compile
-        run: pwsh tools/ci/build.ps1
+        run: bash tools/build/build
         env:
-          DM_EXE: "C:\\byond\\bin\\dm.exe"
+          DM_EXE: ${{ env.DM_EXE }}
       - name: Check client Compatibility
         uses: tgstation/byond-client-compatibility-check@v3
         with:
