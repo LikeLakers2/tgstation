@@ -241,10 +241,6 @@
 	desc = "A hard-light holographic avatar representing a pAI. This one appears in the form of a [chassis_skin.name_in_examine]."
 	return ..()
 
-/mob/living/silicon/pai/update_icon_state()
-	chassis_skin.update_icon_state()
-	return ..()
-
 /mob/living/silicon/pai/set_stat(new_stat)
 	. = ..()
 	update_stat()

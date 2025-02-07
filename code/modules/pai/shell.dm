@@ -96,11 +96,11 @@
 	if (isturf(loc))
 		new /obj/effect/temp_visual/guardian/phase/out(loc)
 	forceMove(card)
-	add_traits(list(TRAIT_IMMOBILIZED, TRAIT_HANDS_BLOCKED), PAI_FOLDED)
-	ADD_TRAIT(src, TRAIT_UNDENSE, PAI_FOLDED)
+	add_traits(list(TRAIT_IMMOBILIZED, TRAIT_HANDS_BLOCKED, TRAIT_UNDENSE), PAI_FOLDED)
 	set_light_on(FALSE)
 	holoform = FALSE
 	set_resting(resting)
+	SEND_SIGNAL(src, COMSIG_PAI_FOLD_IN)
 	return TRUE
 
 /**
@@ -126,9 +126,7 @@
 		return FALSE
 	holochassis_ready = FALSE
 	addtimer(VARSET_CALLBACK(src, holochassis_ready, TRUE), HOLOCHASSIS_COOLDOWN)
-	REMOVE_TRAIT(src, TRAIT_IMMOBILIZED, PAI_FOLDED)
-	REMOVE_TRAIT(src, TRAIT_HANDS_BLOCKED, PAI_FOLDED)
-	REMOVE_TRAIT(src, TRAIT_UNDENSE, PAI_FOLDED)
+	remove_traits(list(TRAIT_IMMOBILIZED, TRAIT_HANDS_BLOCKED, TRAIT_UNDENSE), PAI_FOLDED)
 	forceMove(get_turf(card))
 	if(client)
 		client.perspective = EYE_PERSPECTIVE
@@ -137,6 +135,7 @@
 	update_appearance(UPDATE_ICON_STATE)
 	visible_message(span_boldnotice("[src] appears in a flash of light!"))
 	holoform = TRUE
+	SEND_SIGNAL(src, COMSIG_PAI_FOLD_OUT)
 	return TRUE
 
 /**
