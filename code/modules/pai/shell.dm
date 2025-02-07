@@ -1,5 +1,5 @@
 /mob/living/silicon/pai/mob_try_pickup(mob/living/user, instant=FALSE)
-	if(!chassis_skin.can_be_picked_up)
+	if(!holoform_skin.can_be_picked_up)
 		to_chat(user, span_warning("[src]'s current form isn't able to be carried!"))
 		return FALSE
 	return ..()
@@ -14,7 +14,7 @@
 		visible_message(span_notice("[src] [resting? "lays down for a moment..." : "perks up from the ground."]"))
 
 /mob/living/silicon/pai/wabbajack(what_to_randomize, change_flags = WABBAJACK)
-	var/list/possible_chassis = subtypesof(/datum/pai_chassis_skin) - chassis_skin
+	var/list/possible_chassis = subtypesof(/datum/pai_holoform_skin) - holoform_skin
 	if(length(possible_chassis) <= 1)
 		return FALSE
 	var/holochassis = pick(possible_chassis)
@@ -48,22 +48,22 @@
  */
 /mob/living/silicon/pai/proc/choose_chassis()
 	var/list/possible_choices = list()
-	for(var/datum/pai_chassis_skin/chassis_option as anything in subtypesof(/datum/pai_chassis_skin))
+	for(var/datum/pai_holoform_skin/skin as anything in subtypesof(/datum/pai_holoform_skin))
 		var/datum/radial_menu_choice/choice = new
-		choice.name = chassis_option.name
-		choice.image = image(icon = chassis_option.icon, icon_state = chassis_option.icon_state)
-		possible_choices[chassis_option] += choice
+		choice.name = skin.name
+		choice.image = image(icon = skin.icon, icon_state = skin.icon_state)
+		possible_choices[skin] += choice
 
 	var/atom/anchor = get_atom_on_turf(src)
-	var/datum/pai_chassis_skin/choice = show_radial_menu(src, anchor, possible_choices, custom_check = CALLBACK(src, PROC_REF(check_menu), anchor), radius = 40, require_near = TRUE)
+	var/datum/pai_holoform_skin/choice = show_radial_menu(src, anchor, possible_choices, custom_check = CALLBACK(src, PROC_REF(check_menu), anchor), radius = 40, require_near = TRUE)
 	if(!choice)
 		return FALSE
-	if(istype(choice, chassis_skin))
+	if(istype(choice, holoform_skin))
 		// Perform no work, as we're already using this skin.
 		// Importantly, this prevents the skin from being qdel'd then immediately recreated.
 		return TRUE
 	set_holochassis(choice)
-	balloon_alert(src, "[LOWER_TEXT(chassis_skin.name)] composite engaged")
+	balloon_alert(src, "[LOWER_TEXT(holoform_skin.name)] composite engaged")
 	update_resting()
 	return TRUE
 
@@ -145,12 +145,12 @@
  *
  * @returns {boolean} - TRUE if the skin was successfully set. FALSE otherwise.
  */
-/mob/living/silicon/pai/proc/set_holochassis(datum/pai_chassis_skin/new_chassis)
-	if(!istype(new_chassis))
+/mob/living/silicon/pai/proc/set_holochassis(datum/pai_holoform_skin/new_skin)
+	if(!istype(new_skin))
 		return FALSE
 	// Delete the old skin instance, then apply a new one in its place.
-	QDEL_NULL(chassis_skin)
-	chassis_skin = new new_chassis(src)
+	QDEL_NULL(holoform_skin)
+	holoform_skin = new new_skin(src)
 	update_appearance(UPDATE_DESC | UPDATE_ICON_STATE)
 	return TRUE
 
