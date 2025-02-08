@@ -17,3 +17,10 @@
 #define COMSIG_SILICON_AI_OCCUPY_APC "AI_occupy_apc"
 ///called when an AI vacates an APC
 #define COMSIG_SILICON_AI_VACATE_APC "AI_vacate_apc"
+
+/// Emitted from a /mob/living/silicon/pai: ()
+/// Called when a pAI folds in (changes into its card form)
+#define COMSIG_PAI_FOLD_IN "pai_fold_in"
+/// Emitted from a /mob/living/silicon/pai: ()
+/// Called when a pAI folds out (changes into its mob form)
+#define COMSIG_PAI_FOLD_OUT "pai_fold_out"

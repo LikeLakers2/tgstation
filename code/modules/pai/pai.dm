@@ -29,26 +29,19 @@
 	radio = /obj/item/radio/headset/silicon/pai
 	worn_slot_flags = ITEM_SLOT_HEAD
 
-	/// If someone has enabled/disabled the pAIs ability to holo
-	var/can_holo = TRUE
+	/// The instance of /datum/pai_holoform_handler that handles holoform functions for us.
+	var/datum/pai_holoform_handler/holoform_handler
+
 	/// Whether this pAI can receive radio messages
 	var/can_receive = TRUE
 	/// Whether this pAI can transmit radio messages
 	var/can_transmit = TRUE
 	/// The card we inhabit
 	var/obj/item/pai_card/card
-	/// The current chasis that will appear when in holoform
-	var/chassis = "repairbot"
 	/// Toggles whether the pAI can hold encryption keys or not
 	var/encrypt_mod = FALSE
 	/// The cable we produce when hacking a door
 	var/obj/item/pai_cable/hacking_cable
-	/// The current health of the holochassis
-	var/holochassis_health = 20
-	/// Holochassis available to use
-	var/holochassis_ready = FALSE
-	/// Whether we are currently holoformed
-	var/holoform = FALSE
 	/// Installed software on the pAI
 	var/list/installed_software = list()
 	/// Toggles whether universal translator has been activated. Cannot be reversed
@@ -102,27 +95,6 @@
 		"Internal GPS" = 35,
 		"Universal Translator" = 35,
 	)
-	/// List of all possible chasises. TRUE means the pAI can be picked up in this chasis.
-	var/static/list/possible_chassis = list(
-		"bat" = FALSE,
-		"butterfly" = FALSE,
-		"cat" = TRUE,
-		"chicken" = FALSE,
-		"corgi" = FALSE,
-		"crow" = TRUE,
-		"duffel" = TRUE,
-		"fox" = FALSE,
-		"frog" = TRUE,
-		"hawk" = FALSE,
-		"lizard" = FALSE,
-		"monkey" = TRUE,
-		"mouse" = TRUE,
-		"rabbit" = TRUE,
-		"repairbot" = TRUE,
-		"kitten" = TRUE,
-		"puppy" = TRUE,
-		"spider" = TRUE,
-	)
 
 /mob/living/silicon/pai/add_sensors() //pAIs have to buy their HUDs
 	return
@@ -141,6 +113,7 @@
 	return ..(target, action_bitflags)
 
 /mob/living/silicon/pai/Destroy()
+	QDEL_NULL(holoform_handler)
 	QDEL_NULL(messenger_ability)
 	QDEL_NULL(atmos_analyzer)
 	QDEL_NULL(hacking_cable)
@@ -222,6 +195,7 @@
 		add_traits(list(TRAIT_IMMOBILIZED, TRAIT_HANDS_BLOCKED), PAI_FOLDED)
 	update_appearance(UPDATE_DESC)
 
+	holoform_handler = new(src)
 	RegisterSignal(src, COMSIG_LIVING_CULT_SACRIFICED, PROC_REF(on_cult_sacrificed))
 	RegisterSignals(src, list(COMSIG_LIVING_ADJUST_BRUTE_DAMAGE, COMSIG_LIVING_ADJUST_BURN_DAMAGE), PROC_REF(on_shell_damaged))
 	RegisterSignal(src, COMSIG_LIVING_ADJUST_STAMINA_DAMAGE, PROC_REF(on_shell_weakened))

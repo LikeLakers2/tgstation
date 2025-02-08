@@ -8,8 +8,8 @@
 		return
 	take_holo_damage(50 / severity)
 	Stun(400 / severity)
-	if(holoform)
-		fold_in(force = TRUE)
+	if(holoform_handler.in_holoform)
+		holoform_handler.fold_in(force = TRUE)
 	//Need more effects that aren't instadeath or permanent law corruption.
 	//Ask and you shall receive
 	switch(rand(1, 3))
@@ -32,10 +32,10 @@
 			qdel(card)
 			qdel(src)
 		if(EXPLODE_HEAVY)
-			fold_in(force = 1)
+			holoform_handler.fold_in(force = TRUE)
 			Paralyze(400)
 		if(EXPLODE_LIGHT)
-			fold_in(force = 1)
+			holoform_handler.fold_in(force = TRUE)
 			Paralyze(200)
 
 	return TRUE
