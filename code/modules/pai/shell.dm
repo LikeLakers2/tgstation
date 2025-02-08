@@ -19,7 +19,7 @@
 		return FALSE
 	var/holochassis = pick(possible_chassis)
 	set_holochassis(holochassis)
-	balloon_alert(src, "[LOWER_TEXT(chassis_skin.name)] composite engaged")
+	balloon_alert(src, "[LOWER_TEXT(holoform_skin.name)] composite engaged")
 	return TRUE
 
 /**
@@ -141,12 +141,13 @@
 /**
  * Sets the holochassis skin and updates the icons
  *
- * @param {/datum/pai_chassis_skin} choice - The skin that will be used for the pAI holoform
+ * @param {/datum/pai_chassis_skin} choice - The typepath of the skin that will be used for the pAI
+ * holoform
  *
  * @returns {boolean} - TRUE if the skin was successfully set. FALSE otherwise.
  */
 /mob/living/silicon/pai/proc/set_holochassis(datum/pai_holoform_skin/new_skin)
-	if(!istype(new_skin))
+	if(!ispath(new_skin))
 		return FALSE
 	// Delete the old skin instance, then apply a new one in its place.
 	QDEL_NULL(holoform_skin)
