@@ -26,10 +26,7 @@
 
 /datum/action/innate/pai/shell/Trigger(trigger_flags)
 	..()
-	if(pai_owner.holoform)
-		pai_owner.fold_in(0)
-	else
-		pai_owner.fold_out()
+	pai_owner.holoform_handler.toggle_folded()
 
 /datum/action/innate/pai/chassis
 	name = "Holochassis Appearance Composite"

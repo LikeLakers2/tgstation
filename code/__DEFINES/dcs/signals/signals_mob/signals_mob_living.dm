@@ -309,3 +309,9 @@
 #define COMSIG_LIVING_ATTACK_ATOM "living_attack_atom"
 /// From /mob/living/proc/stop_leaning()
 #define COMSIG_LIVING_STOPPED_LEANING "living_stopped_leaning"
+
+/// From /mob/living/mob_try_pickup(): (mob/living/who_is_picking_up, instant)
+/// Emitted when another mob tries to pick up this mob (i.e. picking up a pet)
+#define COMSIG_LIVING_TRY_PICKUP "living_try_pickup"
+	/// Prevent this mob from being picked up.
+	#define COMSIG_LIVING_PREVENT_PICKUP (1<<0)

@@ -2028,6 +2028,9 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 	if(buckled)
 		to_chat(user, span_warning("[src] is buckled to something!"))
 		return FALSE
+	if(SEND_SIGNAL(src, COMSIG_LIVING_TRY_PICKUP, user, instant) & COMSIG_LIVING_PREVENT_PICKUP)
+		// It's assumed that the signal handlers will send a message.
+		return FALSE
 	if(!instant)
 		user.visible_message(span_warning("[user] starts trying to scoop up [src]!"), \
 						span_danger("You start trying to scoop up [src]..."), null, null, src)

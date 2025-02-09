@@ -5524,6 +5524,7 @@
 #include "code\modules\pai\debug.dm"
 #include "code\modules\pai\defense.dm"
 #include "code\modules\pai\door_jack.dm"
+#include "code\modules\pai\holoform_handler.dm"
 #include "code\modules\pai\hud.dm"
 #include "code\modules\pai\login.dm"
 #include "code\modules\pai\pai.dm"
