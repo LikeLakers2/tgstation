@@ -32,10 +32,7 @@
 	if(!..())
 		return
 	var/mob/living/silicon/pai/pAI = usr
-	if(pAI.holoform)
-		pAI.fold_in(0)
-	else
-		pAI.fold_out()
+	pAI.holoform_handler.toggle_folded()
 
 /atom/movable/screen/pai/chassis
 	name = "Holochassis Appearance Composite"

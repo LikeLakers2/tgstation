@@ -1,12 +1,3 @@
-/mob/living/silicon/pai/mob_try_pickup(mob/living/user, instant=FALSE)
-	if(!possible_chassis[chassis])
-		to_chat(user, span_warning("[src]'s current form isn't able to be carried!"))
-		return FALSE
-	return ..()
-
-/mob/living/silicon/pai/start_pulling(atom/movable/thing, state, force = move_force, supress_message = FALSE)
-	return FALSE
-
 /mob/living/silicon/pai/update_resting()
 	. = ..()
 	update_appearance(UPDATE_ICON_STATE)

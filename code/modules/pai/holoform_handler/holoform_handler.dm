@@ -25,14 +25,50 @@
 	pai = handled
 	skin = new /datum/pai_holoform_skin(pai)
 
+	// Signals, organized alphabetically by signal name.
+	RegisterSignals(pai, list(COMSIG_LIVING_ADJUST_BRUTE_DAMAGE, COMSIG_LIVING_ADJUST_BURN_DAMAGE), PROC_REF(on_shell_damaged))
+	RegisterSignal(pai, COMSIG_LIVING_ADJUST_STAMINA_DAMAGE, PROC_REF(on_shell_weakened))
 	RegisterSignal(pai, COMSIG_LIVING_PRE_WABBAJACKED, PROC_REF(on_wabbajack))
+	RegisterSignal(pai, COMSIG_LIVING_TRY_PICKUP, PROC_REF(on_mob_try_pickup))
+	RegisterSignal(pai, COMSIG_LIVING_TRY_PULL, PROC_REF(on_try_pull))
 
 /datum/pai_holoform_handler/Destroy(force)
 	pai = null
 	QDEL_NULL(skin)
 	return ..()
 
+/datum/pai_holoform_handler/proc/take_holo_damage(amount)
+	health = clamp((health - amount), -50, HOLOCHASSIS_MAX_HEALTH)
+	if(health < 0)
+		fold_in(force = TRUE)
+	if(amount > 0)
+		to_chat(pai, span_userdanger("The impact degrades your holochassis!"))
+	return amount
+
+/datum/pai_holoform_handler/proc/on_mob_try_pickup(mob/living/user, instant)
+	SIGNAL_HANDLER
+	if(!skin.can_be_picked_up)
+		to_chat(user, span_warning("[pai]'s current form isn't able to be carried!"))
+		return COMSIG_LIVING_PREVENT_PICKUP
+
+/// Called when we take burn or brute damage, pass it to the shell instead
+/datum/pai_holoform_handler/proc/on_shell_damaged(datum/hurt, type, amount, forced)
+	SIGNAL_HANDLER
+	take_holo_damage(amount)
+	return COMPONENT_IGNORE_CHANGE
+
+/// Called when we take stamina damage, pass it to the shell instead
+/datum/pai_holoform_handler/proc/on_shell_weakened(datum/hurt, type, amount, forced)
+	SIGNAL_HANDLER
+	take_holo_damage(amount * ((forced) ? 1 : 0.25))
+	return COMPONENT_IGNORE_CHANGE
+
+/datum/pai_holoform_handler/proc/on_try_pull(atom/movable/thing, force)
+	return COMSIG_LIVING_CANCEL_PULL
+
 /datum/pai_holoform_handler/proc/on_wabbajack()
+	SIGNAL_HANDLER
+
 	var/list/datum/pai_holoform_skin/possible_skins = subtypesof(/datum/pai_holoform_skin) - skin.type
 	if(length(possible_skins))
 		var/new_holochassis = pick(possible_skins)
