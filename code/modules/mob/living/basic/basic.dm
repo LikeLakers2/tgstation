@@ -11,7 +11,12 @@
 
 	var/basic_mob_flags = NONE
 
-	///Defines how fast the basic mob can move. This is not a multiplier
+	/// The speed of this mob.
+	///
+	/// Despite the name of this variable, this is actually the multiplicative slowdown applied to
+	/// this mob's movespeed - and as such, higher values mean a slower mob.
+	///
+	/// The default value, `1`, means the same speed as a human walking (not running).
 	var/speed = 1
 	///How much stamina the mob recovers per second
 	var/stamina_recovery = 5
