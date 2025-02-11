@@ -11,13 +11,9 @@
 
 	var/basic_mob_flags = NONE
 
-	/// The speed of this mob.
-	///
-	/// Despite the name of this variable, this is actually the multiplicative slowdown applied to
-	/// this mob's movespeed - and as such, higher values mean a slower mob.
-	///
-	/// The default value, `1`, means the same speed as a human walking (not running).
-	var/speed = 1
+	/// The move delay of this mob. Higher values mean that it takes longer for a mob to move
+	/// between tiles.
+	var/move_delay = 1
 	///How much stamina the mob recovers per second
 	var/stamina_recovery = 5
 
