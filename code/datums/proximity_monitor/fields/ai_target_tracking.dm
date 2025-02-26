@@ -63,7 +63,8 @@
 	if(!owning_behavior.atom_allowed(movable, filter, controller.pawn))
 		return
 
-	owning_behavior.new_atoms_found(list(movable), controller, target_key, filter, hiding_location_key)
+	var/do_we_have_a_target_now = owning_behavior.new_atoms_found(list(movable), controller, target_key, filter, hiding_location_key)
+	owning_behavior.finish_action(controller, succeeded = do_we_have_a_target_now)
 
 /// React to controller planning
 /datum/proximity_monitor/advanced/ai_target_tracking/proc/controller_deleted(datum/source)

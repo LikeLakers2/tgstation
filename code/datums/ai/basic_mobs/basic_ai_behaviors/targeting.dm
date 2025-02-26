@@ -43,30 +43,12 @@ GLOBAL_LIST_INIT(target_interested_atoms, typecacheof(list(/mob, /obj/machinery/
 		if (can_see(living_mob, hostile_machine, aggro_range))
 			potential_targets += hostile_machine
 
-	if(!potential_targets.len)
+	var/do_we_have_a_target_now = new_atoms_found(potential_targets, controller, target_key, targeting_strategy, hiding_location_key)
+	if(do_we_have_a_target_now)
 		failed_to_find_anyone(controller, target_key, targeting_strategy_key, hiding_location_key)
+		return AI_BEHAVIOR_DELAY | AI_BEHAVIOR_SUCCEEDED
+	else
 		return AI_BEHAVIOR_DELAY | AI_BEHAVIOR_FAILED
-
-	var/list/filtered_targets = list()
-
-	for(var/atom/pot_target in potential_targets)
-		if(targeting_strategy.can_attack(living_mob, pot_target))//Can we attack it?
-			filtered_targets += pot_target
-			continue
-
-	if(!filtered_targets.len)
-		failed_to_find_anyone(controller, target_key, targeting_strategy_key, hiding_location_key)
-		return AI_BEHAVIOR_DELAY | AI_BEHAVIOR_FAILED
-
-	var/atom/target = pick_final_target(controller, filtered_targets)
-	controller.set_blackboard_key(target_key, target)
-
-	var/atom/potential_hiding_location = targeting_strategy.find_hidden_mobs(living_mob, target)
-
-	if(potential_hiding_location) //If they're hiding inside of something, we need to know so we can go for that instead initially.
-		controller.set_blackboard_key(hiding_location_key, potential_hiding_location)
-
-	return AI_BEHAVIOR_DELAY | AI_BEHAVIOR_SUCCEEDED
 
 /datum/ai_behavior/find_potential_targets/proc/failed_to_find_anyone(datum/ai_controller/controller, target_key, targeting_strategy_key, hiding_location_key)
 	var/aggro_range = controller.blackboard[aggro_range_key] || vision_range
@@ -92,14 +74,9 @@ GLOBAL_LIST_INIT(target_interested_atoms, typecacheof(list(/mob, /obj/machinery/
 	var/valid_found = FALSE
 	var/mob/pawn = controller.pawn
 	for(var/maybe_target as anything in found)
-		if(maybe_target == pawn)
-			continue
-		if(!is_type_in_typecache(maybe_target, GLOB.target_interested_atoms))
-			continue
-		if(!strategy.can_attack(pawn, maybe_target))
-			continue
-		valid_found = TRUE
-		break
+		if(atom_allowed(maybe_target, strategy, pawn))
+			valid_found = TRUE
+			break
 	if(!valid_found)
 		return
 	// If we found any one thing we "could" attack, then run the full search again so we can select from the best possible canidate
@@ -108,7 +85,9 @@ GLOBAL_LIST_INIT(target_interested_atoms, typecacheof(list(/mob, /obj/machinery/
 	// Fire instantly, you should find something I hope
 	controller.modify_cooldown(src, world.time)
 
-/datum/ai_behavior/find_potential_targets/proc/atom_allowed(atom/movable/checking, datum/targeting_strategy/strategy, mob/pawn)
+/// Check if an atom can be a potential target. Override this in a subtype if you want to filter
+/// atoms further than a simple targeting strategy will allow.
+/datum/ai_behavior/find_potential_targets/proc/atom_allowed(atom/checking, datum/targeting_strategy/strategy, mob/pawn)
 	if(checking == pawn)
 		return FALSE
 	if(!ismob(checking) && !is_type_in_typecache(checking, GLOB.target_interested_atoms))
@@ -117,18 +96,18 @@ GLOBAL_LIST_INIT(target_interested_atoms, typecacheof(list(/mob, /obj/machinery/
 		return FALSE
 	return TRUE
 
-/datum/ai_behavior/find_potential_targets/proc/new_atoms_found(list/atom/movable/found, datum/ai_controller/controller, target_key, datum/targeting_strategy/strategy, hiding_location_key)
+/// We have found some potential targets - let's notify the ai behavior of them.
+///
+/// Returns a boolean describing whether we have a new target now.
+/datum/ai_behavior/find_potential_targets/proc/new_atoms_found(list/atom/found, datum/ai_controller/controller, target_key, datum/targeting_strategy/strategy, hiding_location_key)
 	var/mob/pawn = controller.pawn
 	var/list/accepted_targets = list()
 	for(var/maybe_target as anything in found)
-		if(maybe_target == pawn)
-			continue
-		// Need to better handle viewers here
-		if(!ismob(maybe_target) && !is_type_in_typecache(maybe_target, GLOB.target_interested_atoms))
-			continue
-		if(!strategy.can_attack(pawn, maybe_target))
-			continue
-		accepted_targets += maybe_target
+		if(atom_allowed(maybe_target, strategy, pawn))
+			accepted_targets += maybe_target
+
+	if(!accepted_targets.len)
+		return FALSE
 
 	// Alright, we found something acceptable, let's use it yeah?
 	var/atom/target = pick_final_target(controller, accepted_targets)
@@ -139,7 +118,7 @@ GLOBAL_LIST_INIT(target_interested_atoms, typecacheof(list(/mob, /obj/machinery/
 	if(potential_hiding_location) //If they're hiding inside of something, we need to know so we can go for that instead initially.
 		controller.set_blackboard_key(hiding_location_key, potential_hiding_location)
 
-	finish_action(controller, succeeded = TRUE)
+	return TRUE
 
 /datum/ai_behavior/find_potential_targets/finish_action(datum/ai_controller/controller, succeeded, target_key, targeting_strategy_key, hiding_location_key)
 	. = ..()
